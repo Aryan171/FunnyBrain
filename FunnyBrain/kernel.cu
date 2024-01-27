@@ -6,20 +6,20 @@
 #define MAX_THREADS 1024
 const int SQRT_MAX_THREADS = static_cast<int>(sqrt(MAX_THREADS));
 
-__global__ void CUDAAdd1d(const int* dev_a, const int* dev_b, int* dev_c, const int size)
+__global__ void CUDAAdd1d(const int* dev_a, const int* dev_b, int* dev_c, const int arrayLength)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (i < size) {
+    if (i < arrayLength) {
         dev_c[i] = dev_a[i] + dev_b[i];
     }
 }
 
-__global__ void CUDASubtract1d(const int* dev_a, const int* dev_b, int* dev_c, const int size)
+__global__ void CUDASubtract1d(const int* dev_a, const int* dev_b, int* dev_c, const int arrayLength)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (i < size) {
+    if (i < arrayLength) {
         dev_c[i] = dev_a[i] - dev_b[i];
     }
 }
@@ -40,12 +40,14 @@ __global__ void CUDASubtract2d(const int** dev_a, const int** dev_b, int** dev_c
     }
 }
 
-__host__ void Add1d(const int* dev_a, const int* dev_b, int* dev_c, const int size) {
-    CUDAAdd1d << < size / MAX_THREADS, size < MAX_THREADS ? size, MAX_THREADS >> > (dev_a, dev_b, dev_c, size);
+__host__ void Add1d(const int* dev_a, const int* dev_b, int* dev_c, const int arrayLength) {
+    dim3 numBlocks((arrayLength / MAX_THREADS) + (arrayLength % MAX_THREADS == 0 ? 0 : 1));
+    CUDAAdd1d << < numBlocks, MAX_THREADS >> > (dev_a, dev_b, dev_c, arrayLength);
 }
 
-__host__ void Subtract1d(const int* dev_a, const int* dev_b, int* dev_c, const int size) {
-    CUDASubtract1d << < size / MAX_THREADS, size < MAX_THREADS ? size, MAX_THREADS >> > (dev_a, dev_b, dev_c, size);
+__host__ void Subtract1d(const int* dev_a, const int* dev_b, int* dev_c, const int arrayLength) {
+    dim3 numBlocks((arrayLength / MAX_THREADS) + (arrayLength % MAX_THREADS == 0 ? 0 : 1));
+    CUDASubtract1d << < numBlocks, MAX_THREADS >> > (dev_a, dev_b, dev_c, arrayLength);
 }
 
 // rows is the number of arrays in the 2d array and columns is the number of elements in each row of an array
@@ -64,24 +66,31 @@ __host__ void Subtract2d(const int** dev_a, const int** dev_b, int** dev_c, cons
     CUDAAdd2d << < numBlocks, threadsPerBlock >> > (dev_a, dev_b, dev_c, rows, columns);
 }
 
-__host__ void Create(const void* devPtr, const int size) {
-    cudaMalloc(&devPtr, size);
+__host__ void* Create(size_t sizeInBytes) {
+    void* devPtr;
+    cudaMalloc(&devPtr, sizeInBytes);
+    return devPtr;
 }
 
-__host__ void CopyDeviceToHost(void* dst, const void* src, const int size) {
-    cudaMemcpy(dst, src, size, cudaMemcpyDeviceToHost);
+__host__ void CopyDeviceToHost(void* dst, const void* src, size_t sizeInBytes) {
+    cudaMemcpy(dst, src, sizeInBytes, cudaMemcpyDeviceToHost);
 }
 
-__host__ void CopyHostToDevice(void* dst, const void* src, const int size) {
-    cudaMemcpy(dst, src, size, cudaMemcpyHostToDevice);
+__host__ void CopyHostToDevice(void* dst, const void* src, size_t sizeInBytes) {
+    cudaMemcpy(dst, src, sizeInBytes, cudaMemcpyHostToDevice);
 }
 
-__host__ void CopyDeviceToDevice(void* dst, const void* src, const int size) {
-    cudaMemcpy(dst, src, size, cudaMemcpyDeviceToDevice);
+__host__ void CopyDeviceToDevice(void* dst, const void* src, size_t sizeInBytes) {
+    cudaMemcpy(dst, src, sizeInBytes, cudaMemcpyDeviceToDevice);
 }
 
-__host__ void CopyHostToHost(void* dst, const void* src, const int size) {
-    cudaMemcpy(dst, src, size, cudaMemcpyHostToHost);
+__host__ void CopyHostToHost(void* dst, const void* src, size_t sizeInBytes) {
+    cudaMemcpy(dst, src, sizeInBytes, cudaMemcpyHostToHost);
+}
+
+// Waits till all the threads in the gpu finish doing their work
+__host__ void Wait() {
+    cudaDeviceSynchronize();
 }
 
 __host__ void Free(void* devPtr) {
