@@ -86,7 +86,8 @@
     <ClInclude Include="FunnyBrain.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="FunnyBrain.cpp" />
+    <ClCompile Include="Tensor1d.cpp" />
+    <ClCompile Include="Tensor2d.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
