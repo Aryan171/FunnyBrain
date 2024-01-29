@@ -84,6 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FunnyBrain.h" />
+    <ClInclude Include="FunnyBrainInternal.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Tensor1d.cpp" />

@@ -43,20 +43,22 @@ __global__ void CUDAMultiplyArrays(const float* dev_a, const float* dev_b, float
 }
 
 __host__ void AddArrays(const float* dev_a, const float* dev_b, float* dev_c, const int arrayLength) {
-    dim3 numBlocks((arrayLength / MAX_THREADS) + (arrayLength % MAX_THREADS == 0 ? 0 : 1));
+    dim3 numBlocks((arrayLength + MAX_THREADS - 1) / MAX_THREADS);
     CUDAAddArrays <<< numBlocks, MAX_THREADS >>> (dev_a, dev_b, dev_c, arrayLength);
 }
 
 __host__ void SubtractArrays(const float* dev_a, const float* dev_b, float* dev_c, const int arrayLength) {
-    dim3 numBlocks((arrayLength / MAX_THREADS) + (arrayLength % MAX_THREADS == 0 ? 0 : 1));
+    dim3 numBlocks((arrayLength + MAX_THREADS - 1) / MAX_THREADS);
     CUDASubtractArrays <<< numBlocks, MAX_THREADS >>> (dev_a, dev_b, dev_c, arrayLength);
 }
 
 __host__ void Multiply2d(const float* dev_a, const float* dev_b, float* dev_c, 
     const int a_rows, const int a_columns, const int b_columns) {
-    dim3 numBlocks((b_columns / MAX_THREADS) + (b_columns % MAX_THREADS == 0 ? 0 : 1),
-        (a_rows / MAX_THREADS) + (a_rows % MAX_THREADS == 0 ? 0 : 1));
-    CUDAMultiplyArrays <<<  numBlocks, THREADS_PER_BLOCK >>> (dev_a, dev_b, dev_c, a_rows, a_columns, b_columns);
+    dim3 numBlocks((b_columns + MAX_THREADS - 1) / MAX_THREADS,
+        (a_rows + MAX_THREADS - 1) / MAX_THREADS);
+    dim3 threadsPerBlock(b_columns < MAX_THREADS ? b_columns : MAX_THREADS,
+        a_rows < MAX_THREADS ? a_rows : MAX_THREADS);
+    CUDAMultiplyArrays <<<  numBlocks, threadsPerBlock >>> (dev_a, dev_b, dev_c, a_rows, a_columns, b_columns);
 }
 
 __host__ void* Create(size_t sizeInBytes) {
@@ -81,11 +83,10 @@ __host__ void CopyHostToHost(void* dst, const void* src, size_t sizeInBytes) {
     cudaMemcpy(dst, src, sizeInBytes, cudaMemcpyHostToHost);
 }
 
-// Waits till all the threads in the gpu finish doing their work
 __host__ void Wait() {
     cudaDeviceSynchronize();
 }
 
 __host__ void Free(void* devPtr) {
-    cudaError a = cudaFree(devPtr);
+    cudaFree(devPtr);
 }
