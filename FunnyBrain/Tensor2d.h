@@ -1,3 +1,4 @@
+#pragma once
 #include "FunnyBrainInternal.h"
 
 class Tensor2d {
@@ -72,7 +73,7 @@ public:
 		Multiply2d(a.tensor, b.tensor, c.tensor, a.rows, a.columns, b.columns);
 		return 0;
 	}
-	
+
 	/*
 	Sets the value of the 2d tensor of b equal to a
 	b.tensor = a is wrong because b.tensor is a device pointer (a pointer pointing to an array
@@ -85,7 +86,7 @@ public:
 		if (a_rows != b.rows || a_columns != b.columns) {
 			return 1;
 		}
-		
+
 		CopyHostToDevice(b.tensor, a, b.sizeInBytes);
 		return 0;
 	}
