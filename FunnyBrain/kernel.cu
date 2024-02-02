@@ -42,6 +42,45 @@ __global__ void CUDAMultiplyArrays(const float* dev_a, const float* dev_b, float
     }   
 }
 
+__global__ void CUDAAddConstant(float* dev_a, float b, int arrayLength) {
+    int index = blockDim.x * blockIdx.x + threadIdx.x;
+    
+    if (index < arrayLength) {
+        dev_a[index] += b;
+    }
+}
+
+__global__ void CUDASubtractConstant(float* dev_a, float b, int arrayLength) {
+    int index = blockDim.x * blockIdx.x + threadIdx.x;
+
+    if (index < arrayLength) {
+        dev_a[index] -= b;
+    }
+}
+
+__global__ void CUDAMultiplyConstant(float* dev_a, float b, int arrayLength) {
+    int index = blockDim.x * blockIdx.x + threadIdx.x;
+
+    if (index < arrayLength) {
+        dev_a[index] *= b;
+    }
+}
+
+__host__ void  AddConstant(const float* dev_a, float b, int arrayLength) {
+    dim3 numBlocks((arrayLength + MAX_THREADS - 1) / MAX_THREADS);
+    CUDAAddConstant << < numBlocks, MAX_THREADS >> > (dev_a, b, arrayLength);
+}
+
+__host__ void  SubtractConstant(const float* dev_a, float b, int arrayLength) {
+    dim3 numBlocks((arrayLength + MAX_THREADS - 1) / MAX_THREADS);
+    CUDASubtractConstant << < numBlocks, MAX_THREADS >> > (dev_a, b, arrayLength);
+}
+
+__host__ void  MultiplyConstant(const float* dev_a, float b, int arrayLength) {
+    dim3 numBlocks((arrayLength + MAX_THREADS - 1) / MAX_THREADS);
+    CUDAMultiplyConstant << < numBlocks, MAX_THREADS >> > (dev_a, b, arrayLength);
+}
+
 __host__ void AddArrays(const float* dev_a, const float* dev_b, float* dev_c, const int arrayLength) {
     dim3 numBlocks((arrayLength + MAX_THREADS - 1) / MAX_THREADS);
     CUDAAddArrays <<< numBlocks, MAX_THREADS >>> (dev_a, dev_b, dev_c, arrayLength);

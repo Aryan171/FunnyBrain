@@ -5,12 +5,14 @@ class Tensor2d {
 public:
 	float* tensor = nullptr; // the device pointer of the tensor
 	int rows, columns;
+	int numFloats;
 	size_t sizeInBytes;
 
 	Tensor2d(const int rows, const int columns) {
 		this->rows = rows;
 		this->columns = columns;
 		this->sizeInBytes = rows * columns * sizeof(float);
+		this->numFloats = rows * columns;
 		this->tensor = (float*)Create(this->sizeInBytes);
 	}
 
@@ -18,6 +20,7 @@ public:
 		this->rows = tensor2d.rows;
 		this->columns = tensor2d.columns;
 		this->sizeInBytes = this->rows * this->columns * sizeof(float);
+		this->numFloats = rows * columns;
 		this->tensor = (float*)Create(this->sizeInBytes);
 		CopyHostToHost(this->tensor, tensor2d.tensor, this->sizeInBytes);
 	}
@@ -26,6 +29,7 @@ public:
 		this->rows = rows;
 		this->columns = columns;
 		this->sizeInBytes = this->rows * this->columns * sizeof(float);
+		this->numFloats = rows * columns;
 		this->tensor = (float*)Create(this->sizeInBytes);
 		CopyHostToDevice(this->tensor, floatArray, this->sizeInBytes);
 	}
@@ -44,7 +48,7 @@ public:
 		if (a.rows != b.rows || a.rows != c.rows || a.columns != b.columns || a.columns != c.columns) {
 			return 1;
 		}
-		AddArrays(a.tensor, b.tensor, c.tensor, a.columns * a.rows);
+		AddArrays(a.tensor, b.tensor, c.tensor, a.numFloats);
 		return 0;
 	}
 
@@ -58,7 +62,7 @@ public:
 		if (a.rows != b.rows || a.rows != c.rows || a.columns != b.columns || a.columns != c.columns) {
 			return 1;
 		}
-		SubtractArrays(a.tensor, b.tensor, c.tensor, a.columns * a.rows);
+		SubtractArrays(a.tensor, b.tensor, c.tensor, a.numFloats);
 	}
 
 	/*
@@ -79,36 +83,41 @@ public:
 	}
 
 	/*
+	Adds a constant value b to all the floats of the 2d tensor a
+	*/
+	void AddConstantVal(float b) {
+		AddConstant(this->tensor, b, this->numFloats);
+	}
+
+	/*
+	Multiplies a constant value b to all the floats of the 2d tensor a
+	*/
+	void MultiplyConstantVal(float b) {
+		MultiplyConstant(this->tensor, b, this->numFloats);
+	}
+
+	/*
+	Subtracts a constant value b from all the floats of the 2d tensor a
+	*/
+	void SubtractConstantVal(float b) {
+		SubtractConstant(this->tensor, b, this->numFloats);
+	}
+
+	/*
 	Sets the value of the 2d tensor of b equal to a
 	b.tensor = a is wrong because b.tensor is a device pointer (a pointer pointing to an array
 	in the device(gpu) memory)
-
-	Returns 0- if the operation was performed successfully
-	1- if the dimentions of a and b mismatch
 	*/
-	static int SetValue(const float* a, const int a_rows, const int a_columns, Tensor2d& b) {
-		if (a_rows != b.rows || a_columns != b.columns) {
-			return 1;
-		}
-
-		CopyHostToDevice(b.tensor, a, b.sizeInBytes);
-		return 0;
+	void SetValue(const float* a) {
+		CopyHostToDevice(this->tensor, a, this->sizeInBytes);
 	}
 
 	/*
 	Sets the value of a equal to the 2d tensor b
 	a = b.tensor is wrong because b.tensor is a device pointer (a pointer pointing to an array
 	in the device(gpu) memory)
-
-	Returns 0- if the operation was performed successfully
-	1- if the dimentions of a and b mismatch
 	*/
-	static int GetValue(float* a, const int a_rows, const int a_columns, const Tensor2d& b) {
-		if (a_rows != b.rows || a_columns != b.columns) {
-			return 1;
-		}
-
-		CopyDeviceToHost(a, b.tensor, b.sizeInBytes);
-		return 0;
+	void GetValue(float* a) {
+		CopyDeviceToHost(a, this->tensor, this->sizeInBytes);
 	}
 };

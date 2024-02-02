@@ -1,6 +1,21 @@
 #pragma once
 
 /*
+Adds a constant value to all the floats of the array dev_a
+*/
+void  AddConstant(const float* dev_a, float b, int arrayLength);
+
+/*
+Subtracts a constant value from all the floats of the array dev_a
+*/
+void  SubtractConstant(const float* dev_a, float b, int arrayLength);
+
+/*
+Multiplies a constant value to all the floats of the array dev_a
+*/
+void  MultiplyConstant(const float* dev_a, float b, int arrayLength);
+
+/*
 Adds the arrays dev_a and dev_b and stores the result in dev_c
 dev_a, dev_b and dev_c are device pointers
 */
