@@ -14,7 +14,7 @@ public:
 	}
 
 	Tensor1d(const Tensor1d& tensor1d) {
-		this->length = length;
+		this->length = tensor1d.length;
 		this->sizeInBytes = length * sizeof(float);
 		this->tensor = (float*)Create(this->sizeInBytes);
 		CopyHostToHost(this->tensor, tensor1d.tensor, this->sizeInBytes);
@@ -25,6 +25,10 @@ public:
 		this->sizeInBytes = length * sizeof(float);
 		this->tensor = (float*)Create(this->sizeInBytes);
 		CopyHostToDevice(this->tensor, floatArray, this->sizeInBytes);
+	}
+
+	~Tensor1d() {
+		Free(this->tensor);
 	}
 
 	/*

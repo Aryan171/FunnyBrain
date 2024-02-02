@@ -30,6 +30,10 @@ public:
 		CopyHostToDevice(this->tensor, floatArray, this->sizeInBytes);
 	}
 
+	~Tensor2d() {
+		Free(this->tensor);
+	}
+
 	/*
 	Adds 2d tensors a and b and stores the result in c
 
