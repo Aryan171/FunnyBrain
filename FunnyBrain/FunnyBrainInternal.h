@@ -49,6 +49,11 @@ Allocates sizeInBytes number of bytes of memory in device(gpu) and returns the d
 void* Create(size_t sizeInBytes);
 
 /*
+Fills the given array "dev_a" with random numbers between minVal and maxVal
+*/
+void GenerateRandom(float* dev_a, float minVal, float maxVal, int arrayLength);
+
+/*
 Copies memory from src(device pointer) to dst(host pointer) (copies memory from gpu to cpu)
 */
 void CopyDeviceToHost(void* dst, const void* src, size_t sizeInBytes);

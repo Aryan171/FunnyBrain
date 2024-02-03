@@ -1,6 +1,8 @@
 ﻿#include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <math.h>
+#include "curand.h"
+#include "chrono"
 
 #ifndef MAX_THREADS
 #define MAX_THREADS 1024
@@ -104,6 +106,17 @@ __host__ void* Create(size_t sizeInBytes) {
     void* devPtr;
     cudaMalloc(&devPtr, sizeInBytes);
     return devPtr;
+}
+
+__host__ void GenerateRandom(float* dev_a, float minVal, float maxVal, int arrayLength) {
+    curandGenerator_t generator;
+    curandCreateGenerator(&generator, CURAND_RNG_PSEUDO_MTGP32);
+    curandSetPseudoRandomGeneratorSeed(generator, std::chrono::system_clock::now().time_since_epoch().count());
+    curandGenerateUniform(generator, dev_a, arrayLength);
+    MultiplyConstant(dev_a, maxVal - minVal, arrayLength);
+    cudaDeviceSynchronize();
+    AddConstant(dev_a, minVal, arrayLength);
+    cudaDeviceSynchronize();
 }
 
 __host__ void CopyDeviceToHost(void* dst, const void* src, size_t sizeInBytes) {

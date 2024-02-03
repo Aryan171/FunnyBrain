@@ -78,10 +78,16 @@ void Tensor2d::GetValue(float* a) {
 }
 
 void Tensor2d::RandomizeValues(float minVal, float maxVal) {
-	curandGenerator_t generator;
-	curandCreateGenerator(&generator, CURAND_RNG_PSEUDO_MTGP32);
-	curandSetPseudoRandomGeneratorSeed(generator, std::chrono::system_clock::now().time_since_epoch().count());
-	curandGenerateUniform(generator, this->tensor, this->numFloats);
-	this->MultiplyConstantVal(maxVal - minVal);
-	this->AddConstantVal(minVal);
+	float* dev_a = (float*)Create(this->sizeInBytes);
+	GenerateRandom(dev_a, minVal, maxVal, this->numFloats);
+	CopyDeviceToDevice(this->tensor, dev_a, this->sizeInBytes);
+	Free(dev_a);
+}
+
+void Tensor2d::Mutate(float minVal, float maxVal) {
+	float* dev_a = (float*)Create(this->sizeInBytes);
+	GenerateRandom(dev_a, minVal, maxVal, this->numFloats);
+	AddArrays(dev_a, this->tensor, this->tensor, this->numFloats);
+	Wait();
+	Free(dev_a);
 }

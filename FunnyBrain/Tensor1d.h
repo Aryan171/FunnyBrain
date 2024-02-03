@@ -63,4 +63,9 @@ public:
 	Sets the values of all the floats of the 1d tensor to a random value in between minVal and maxVal
 	*/
 	void RandomizeValues(float minVal, float maxVal);
+
+	/*
+	For every element in the 1d tensor adds a random value in between minVal and maxVal to the element
+	*/
+	void Mutate(float minVal, float maxVal);
 };
