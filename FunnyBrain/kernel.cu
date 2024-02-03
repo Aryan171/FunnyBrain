@@ -66,17 +66,17 @@ __global__ void CUDAMultiplyConstant(float* dev_a, float b, int arrayLength) {
     }
 }
 
-__host__ void  AddConstant(const float* dev_a, float b, int arrayLength) {
+__host__ void  AddConstant(float* dev_a, float b, int arrayLength) {
     dim3 numBlocks((arrayLength + MAX_THREADS - 1) / MAX_THREADS);
     CUDAAddConstant << < numBlocks, MAX_THREADS >> > (dev_a, b, arrayLength);
 }
 
-__host__ void  SubtractConstant(const float* dev_a, float b, int arrayLength) {
+__host__ void  SubtractConstant(float* dev_a, float b, int arrayLength) {
     dim3 numBlocks((arrayLength + MAX_THREADS - 1) / MAX_THREADS);
     CUDASubtractConstant << < numBlocks, MAX_THREADS >> > (dev_a, b, arrayLength);
 }
 
-__host__ void  MultiplyConstant(const float* dev_a, float b, int arrayLength) {
+__host__ void  MultiplyConstant(float* dev_a, float b, int arrayLength) {
     dim3 numBlocks((arrayLength + MAX_THREADS - 1) / MAX_THREADS);
     CUDAMultiplyConstant << < numBlocks, MAX_THREADS >> > (dev_a, b, arrayLength);
 }
