@@ -1,7 +1,13 @@
 #include "Tensor2d.h"
 #include "FunnyBrainInternal.h"
-#include "curand.h"
-#include "chrono"
+
+Tensor2d::Tensor2d() {
+	this->rows = 0;
+	this->columns = 0;
+	this->numFloats = 0;
+	this->sizeInBytes = 0;
+	this->tensor = nullptr;
+}
 
 Tensor2d::Tensor2d(const int rows, const int columns) {
 	this->rows = rows;

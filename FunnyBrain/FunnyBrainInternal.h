@@ -28,7 +28,7 @@ dev_a, dev_b and dev_c are device pointers
 void SubtractArrays(const float* dev_a, const float* dev_b, float* dev_c, const int arrayLength);
 
 /*
-Multiplies two matrices dev_a and dev_b and stores the result in matrix dev_c
+Multiplies two matrices dev_a and dev_b asynchronously and stores the result in matrix dev_c
 
 dev_a, dev_b and dev_c are one dimentional arrays, with the rows written one
 after other 
@@ -50,8 +50,22 @@ void* Create(size_t sizeInBytes);
 
 /*
 Fills the given array "dev_a" with random numbers between minVal and maxVal
+It is synchronous by design
 */
 void GenerateRandom(float* dev_a, float minVal, float maxVal, int arrayLength);
+
+/*
+Calculates the value of a layer of a neural network asynchronously
+Parameter:-
+dev_pLayer- device pointer of array of outputs of previous layer
+dev_biases- device pointer of array of biases for current layer
+dev_weights- device pointer of array of weights of connections between the previous and this layer
+dev_outputLayer- device pointer of array where the output of the operation will be stored
+dev_weights_rows- number of rows in the tensor weights
+dev_weights_columns- number of columns in the tensor weights
+*/
+void CalculateLayer(const float* dev_pLayer, const float* dev_biases,
+    const float* dev_weights, float* dev_outputLayer, const int dev_weights_rows, const int dev_weights_columns);
 
 /*
 Copies memory from src(device pointer) to dst(host pointer) (copies memory from gpu to cpu)

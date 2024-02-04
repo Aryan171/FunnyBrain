@@ -44,6 +44,21 @@ __global__ void CUDAMultiplyArrays(const float* dev_a, const float* dev_b, float
     }   
 }
 
+__global__ void CUDACalculateLayer(const float* dev_pLayer, const float* dev_biases, 
+    const float* dev_weights, float* dev_outputLayer, const int dev_weights_rows, const int dev_weights_columns) {
+
+    int row = blockDim.x * blockIdx.x + threadIdx.x;
+    if (row < dev_weights_rows) {
+        // temporary variable used to compute the result
+        float h = 0;
+        for (int i = 0; i < dev_weights_columns; ++i) {
+            h += dev_weights[row * dev_weights_columns + i] * dev_pLayer[i];
+        }
+
+        dev_outputLayer[row] = h + dev_biases[row];
+    }
+}
+
 __global__ void CUDAAddConstant(float* dev_a, float b, int arrayLength) {
     int index = blockDim.x * blockIdx.x + threadIdx.x;
     
@@ -100,6 +115,14 @@ __host__ void Multiply2d(const float* dev_a, const float* dev_b, float* dev_c,
     dim3 threadsPerBlock(b_columns < MAX_THREADS ? b_columns : MAX_THREADS,
         a_rows < MAX_THREADS ? a_rows : MAX_THREADS);
     CUDAMultiplyArrays <<<  numBlocks, threadsPerBlock >>> (dev_a, dev_b, dev_c, a_rows, a_columns, b_columns);
+}
+
+__host__ void CalculateLayer(const float* dev_pLayer, const float* dev_biases,
+    const float* dev_weights, float* dev_outputLayer, const int dev_weights_rows, const int dev_weights_columns) {
+    dim3 numBlocks((dev_weights_rows + MAX_THREADS - 1) / MAX_THREADS);
+    dim3 threadsPerBlock(dev_weights_rows < MAX_THREADS ? dev_weights_rows : MAX_THREADS);
+    CUDACalculateLayer << < numBlocks, threadsPerBlock >> > (dev_pLayer, dev_biases,
+        dev_weights, dev_outputLayer, dev_weights_rows, dev_weights_columns);
 }
 
 __host__ void* Create(size_t sizeInBytes) {

@@ -1,10 +1,15 @@
 #pragma once
 
+/*
+this is a one dimentional tensor, it can be seen as a 2 dimentional tensor with only one column
+*/
 class Tensor1d {
 public:
 	float* tensor = nullptr; // the device pointer of the tensor
 	int numFloats; // the total number of floats in the tensor
 	size_t sizeInBytes;
+
+	Tensor1d();
 
 	Tensor1d(const int numFloats);
 
@@ -61,11 +66,13 @@ public:
 
 	/*
 	Sets the values of all the floats of the 1d tensor to a random value in between minVal and maxVal
+
 	*/
 	void RandomizeValues(float minVal, float maxVal);
 
 	/*
 	For every element in the 1d tensor adds a random value in between minVal and maxVal to the element
+	It is synchronous
 	*/
 	void Mutate(float minVal, float maxVal);
 };

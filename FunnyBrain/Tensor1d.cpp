@@ -1,7 +1,11 @@
 #include "FunnyBrainInternal.h"
 #include "Tensor1d.h"
-#include "curand.h"
-#include "chrono"
+
+Tensor1d::Tensor1d() {
+	this->numFloats = 0;
+	this->sizeInBytes = 0;
+	this->tensor = nullptr;
+}
 
 Tensor1d::Tensor1d(const int numFloats) {
 	this->numFloats = numFloats;

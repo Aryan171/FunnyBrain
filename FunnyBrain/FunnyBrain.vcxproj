@@ -97,10 +97,12 @@
   <ItemGroup>
     <ClInclude Include="FunnyBrain.h" />
     <ClInclude Include="FunnyBrainInternal.h" />
+    <ClInclude Include="NeuralNet.h" />
     <ClInclude Include="Tensor1d.h" />
     <ClInclude Include="Tensor2d.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="NeuralNet.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="Tensor1d.cpp" />
     <ClCompile Include="Tensor2d.cpp" />
