@@ -1,5 +1,18 @@
 #pragma once
 
+extern const int BINARY_STEP,
+LINEAR,
+SIGMOID,
+TANH,
+RELU,
+LEAKY_RELU,
+PARAMETRIC_RELU,
+ELU,
+SOFTMAX,
+SWISH,
+GELU,
+SELU;
+
 /*
 Adds a constant value to all the floats of the array dev_a
 */
@@ -52,10 +65,12 @@ void* Create(size_t sizeInBytes);
 Fills the given array "dev_a" with random numbers between minVal and maxVal
 It is synchronous by design
 */
-void GenerateRandom(float* dev_a, float minVal, float maxVal, int arrayLength);
+void GenerateRandom(float* dev_a, const float minVal, const float maxVal, const int arrayLength);
 
 /*
 Calculates the value of a layer of a neural network asynchronously
+this function multiplies the weight tensor to the output tensor of previous layer then adds the bias
+tensor and then applies the activation function
 Parameter:-
 dev_pLayer- device pointer of array of outputs of previous layer
 dev_biases- device pointer of array of biases for current layer
@@ -63,9 +78,14 @@ dev_weights- device pointer of array of weights of connections between the previ
 dev_outputLayer- device pointer of array where the output of the operation will be stored
 dev_weights_rows- number of rows in the tensor weights
 dev_weights_columns- number of columns in the tensor weights
+activationFunction- can be BINARY_STEP, LINEAR, SIGMOID, TANH, RELU, LEAKY_RELU, PARAMETRIC_RELU, ELU,
+SOFTMAX, SWISH, GELU, SELU
+parameter- used in case of activation functions like PARAMETRIC_RELU, ELU and SELU
 */
-void CalculateLayer(const float* dev_pLayer, const float* dev_biases,
-    const float* dev_weights, float* dev_outputLayer, const int dev_weights_rows, const int dev_weights_columns);
+void CalculateLayer(const float* dev_pLayer, const float* dev_biases, const float* dev_weights, 
+    float* dev_outputLayer, const int dev_weights_rows, const int dev_weights_columns, const int activationFunction, const float parameter);
+
+void ActivateLayer(float* dev_layer, const int activationFunction, const float parameter, const int arrayLength);
 
 /*
 Copies memory from src(device pointer) to dst(host pointer) (copies memory from gpu to cpu)

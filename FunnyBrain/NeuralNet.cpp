@@ -45,7 +45,7 @@ NeuralNet::NeuralNet(const NeuralNet& nn) {
 	}
 
 	this->biases[nn.numLayers - 1] = Tensor1d(nn.biases[nn.numLayers - 1]);
-	this->shape[nn.numLayers - 1] = shape[nn.numLayers - 1];
+	this->shape[nn.numLayers - 1] = nn.shape[nn.numLayers - 1];
 	this->outputs[nn.numLayers - 1] = Tensor1d(shape[nn.numLayers - 1]);
 }
 
@@ -70,18 +70,19 @@ NeuralNet::NeuralNet(const int* shape, int numLayers) {
 	this->outputs[numLayers] = Tensor1d(shape[numLayers]);
 }
 
-void NeuralNet::FeedForward(const Tensor1d& input) {
+void NeuralNet::FeedForward(const Tensor1d& input, const int activationFunction, const float parameter) {
 	CopyDeviceToDevice(outputs[0].tensor, input.tensor, input.sizeInBytes);
 	Tensor1d::Add(this->outputs[0], this->biases[0], this->outputs[0]);
+	ActivateLayer(this->outputs[0].tensor, activationFunction, parameter, this->outputs[0].numFloats);
 	for (int i = 1; i < this->numLayers; ++i) {
-		this->CalculateNextLayer(i);
+		this->CalculateNextLayer(i, activationFunction, parameter);
 		Wait();
 	}
 }
 
-void NeuralNet::CalculateNextLayer(const int n) {
+void NeuralNet::CalculateNextLayer(const int n, const int activationFunction, const float parameter) {
 	CalculateLayer(this->outputs[n - 1].tensor, this->biases[n].tensor, this->weights[n - 1].tensor, 
-		this->outputs[n].tensor, this->weights[n - 1].rows, this->weights[n - 1].columns);
+		this->outputs[n].tensor, this->weights[n - 1].rows, this->weights[n - 1].columns, activationFunction, parameter);
 }
 
 void NeuralNet::GetLastLayer(float* a) {
@@ -103,7 +104,7 @@ void NeuralNet::Copy(const NeuralNet& nn) {
 	}
 
 	this->biases[nn.numLayers - 1] = Tensor1d(nn.biases[nn.numLayers - 1]);
-	this->shape[nn.numLayers - 1] = shape[nn.numLayers - 1];
+	this->shape[nn.numLayers - 1] = nn.shape[nn.numLayers - 1];
 	this->outputs[nn.numLayers - 1] = Tensor1d(shape[nn.numLayers - 1]);
 }
 

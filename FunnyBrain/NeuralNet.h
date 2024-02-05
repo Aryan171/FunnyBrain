@@ -19,12 +19,12 @@ public:
 	/*
 	Runs the entire neural network once on the given input and fills the entire output array
 	*/
-	void FeedForward(const Tensor1d& input);
+	void FeedForward(const Tensor1d& input, const int activationFunction, const float parameter);
 
 	/*
 	Calculates the values of one layer asynchronously
 	*/
-	void CalculateNextLayer(const int n);
+	void CalculateNextLayer(const int n, const int activationFunction, const float parameter);
 
 	/*
 	Returns the output value of the last layer i.e. returns the output of the neural network

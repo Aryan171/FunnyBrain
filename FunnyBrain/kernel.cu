@@ -7,7 +7,22 @@
 #ifndef MAX_THREADS
 #define MAX_THREADS 1024
 #endif
+
 const int SQRT_MAX_THREADS = static_cast<int>(sqrt(MAX_THREADS));
+
+const int BINARY_STEP = 0,
+LINEAR = 1,
+SIGMOID = 2,
+TANH = 3,
+RELU = 4,
+LEAKY_RELU = 5,
+PARAMETRIC_RELU = 6,
+ELU = 7,
+SOFTMAX = 8,
+SWISH = 9,
+GELU = 10,
+SELU = 11;
+
 const dim3 THREADS_PER_BLOCK(SQRT_MAX_THREADS, SQRT_MAX_THREADS);
 
 __global__ void CUDAAddArrays(const float* dev_a, const float* dev_b, float* dev_c, const int arrayLength)
@@ -44,8 +59,8 @@ __global__ void CUDAMultiplyArrays(const float* dev_a, const float* dev_b, float
     }   
 }
 
-__global__ void CUDACalculateLayer(const float* dev_pLayer, const float* dev_biases, 
-    const float* dev_weights, float* dev_outputLayer, const int dev_weights_rows, const int dev_weights_columns) {
+__global__ void CUDACalculateLayer(const float* dev_pLayer, const float* dev_biases, const float* dev_weights, 
+    float* dev_outputLayer, const int dev_weights_rows, const int dev_weights_columns, const int activationFunction, const float parameter) {
 
     int row = blockDim.x * blockIdx.x + threadIdx.x;
     if (row < dev_weights_rows) {
@@ -55,7 +70,141 @@ __global__ void CUDACalculateLayer(const float* dev_pLayer, const float* dev_bia
             h += dev_weights[row * dev_weights_columns + i] * dev_pLayer[i];
         }
 
-        dev_outputLayer[row] = h + dev_biases[row];
+        h += dev_biases[row];
+
+        switch (activationFunction) {
+        case BINARY_STEP:
+            if (h >= 0.0f) {
+                h = 1.0f;
+            }
+            else {
+                h = 0;
+            }
+            break;
+
+        case SIGMOID:
+            h = 1.0f / (1.0f + exp(-h));
+            break;
+
+        case TANH:
+            h = tanhf(h);
+            break;
+
+        case RELU:
+            if (h < 0.0f) {
+                h = 0;
+            }
+            break;
+
+        case LEAKY_RELU:
+            if (h < 0.0f) {
+                h = 0.1f * h;
+            }
+            break;
+
+        case PARAMETRIC_RELU:
+            if (h < 0.0f) {
+                h = parameter * h;
+            }
+            break;
+
+        case ELU:
+            if (h < 0.0f) {
+                h = parameter * (exp(h) - 1);
+            }
+            break;
+
+        case SOFTMAX:
+            h = 1.0f / (1.0f + exp(-h));
+            break;
+
+        case SWISH:
+            h = h / (1.0f + exp(-h));
+            break;
+
+        case GELU:
+            h = 0.5 * h * (1.0f + tanhf(0.7978845f * (h + 0.044715 * powf(h, 3))));
+            break;
+
+        case SELU:
+            if (h < 0.0f) {
+                h = parameter * (exp(h) - 1.0f);
+            }
+            break;
+        }
+
+        dev_outputLayer[row] = h;
+    }
+}
+
+__global__ void CUDAActivateLayer(float* dev_layer, const int activationFunction, const float parameter, const int arrayLength) {
+    int row = blockDim.x * blockIdx.x + threadIdx.x;
+    if (row < arrayLength) {
+        // temporary variable used to compute the result
+        float h = 0;
+
+        switch (activationFunction) {
+        case BINARY_STEP:
+            if (h >= 0.0f) {
+                h = 1.0f;
+            }
+            else {
+                h = 0;
+            }
+            break;
+
+        case SIGMOID:
+            h = 1.0f / (1.0f + exp(-h));
+            break;
+
+        case TANH:
+            h = tanhf(h);
+            break;
+
+        case RELU:
+            if (h < 0.0f) {
+                h = 0;
+            }
+            break;
+
+        case LEAKY_RELU:
+            if (h < 0.0f) {
+                h = 0.1f * h;
+            }
+            break;
+
+        case PARAMETRIC_RELU:
+            if (h < 0.0f) {
+                h = parameter * h;
+            }
+            break;
+
+        case ELU:
+            if (h < 0.0f) {
+                h = parameter * (exp(h) - 1);
+            }
+            break;
+
+        case SOFTMAX:
+            h = 1.0f / (1.0f + exp(-h));
+            break;
+
+        case SWISH:
+            h = h / (1.0f + exp(-h));
+            break;
+
+        case GELU:
+            h = 0.5 * h * (1.0f + tanhf(0.7978845f * (h + 0.044715 * powf(h, 3))));
+            break;
+
+        case SELU:
+            if (h < 0.0f) {
+                h = parameter * (exp(h) - 1.0f);
+            }
+            break;
+        }
+
+        dev_layer[row] = h;
     }
 }
 
@@ -117,12 +266,20 @@ __host__ void Multiply2d(const float* dev_a, const float* dev_b, float* dev_c,
     CUDAMultiplyArrays <<<  numBlocks, threadsPerBlock >>> (dev_a, dev_b, dev_c, a_rows, a_columns, b_columns);
 }
 
-__host__ void CalculateLayer(const float* dev_pLayer, const float* dev_biases,
-    const float* dev_weights, float* dev_outputLayer, const int dev_weights_rows, const int dev_weights_columns) {
+__host__ void CalculateLayer(const float* dev_pLayer, const float* dev_biases, const float* dev_weights, 
+    float* dev_outputLayer, const int dev_weights_rows, const int dev_weights_columns, const int activationFunction, const float parameter) {
     dim3 numBlocks((dev_weights_rows + MAX_THREADS - 1) / MAX_THREADS);
     dim3 threadsPerBlock(dev_weights_rows < MAX_THREADS ? dev_weights_rows : MAX_THREADS);
-    CUDACalculateLayer << < numBlocks, threadsPerBlock >> > (dev_pLayer, dev_biases,
-        dev_weights, dev_outputLayer, dev_weights_rows, dev_weights_columns);
+    CUDACalculateLayer << < numBlocks, threadsPerBlock >> > (dev_pLayer, dev_biases, dev_weights, 
+        dev_outputLayer, dev_weights_rows, dev_weights_columns, activationFunction, parameter);
+}
+
+
+
+__host__ void ActivateLayer(float* dev_layer, const int activationFunction, const float parameter, const int arrayLength) {
+    dim3 numBlocks((arrayLength + MAX_THREADS - 1) / MAX_THREADS);
+    dim3 threadsPerBlock(arrayLength < MAX_THREADS ? arrayLength : MAX_THREADS);
+    CUDAActivateLayer << <numBlocks, threadsPerBlock >> > (dev_layer, activationFunction, parameter, arrayLength);
 }
 
 __host__ void* Create(size_t sizeInBytes) {

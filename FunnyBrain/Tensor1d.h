@@ -63,7 +63,7 @@ public:
 	in the device(gpu) memory)
 	*/
 	void GetValue(float* a);
-
+ 
 	/*
 	Sets the values of all the floats of the 1d tensor to a random value in between minVal and maxVal
 
