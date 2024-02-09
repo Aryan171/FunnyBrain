@@ -12,9 +12,10 @@ public:
 	int numLayers;
 
 	NeuralNet();
-	NeuralNet(const Tensor1d* biases, const Tensor2d* weights, const int* shape, const int numLayers);
-	NeuralNet(const NeuralNet& nn);
-	NeuralNet(const int* shape, const int numLayers);
+
+	void Initialize(const Tensor1d* biases, const Tensor2d* weights, const int* shape, const int numLayers);
+	void Initialize(const NeuralNet& nn);
+	void Initialize(const int* shape, const int numLayers);
 
 	/*
 	Runs the entire neural network once on the given input and fills the entire output array
@@ -46,4 +47,9 @@ public:
 	Copies a neural network and then mutates itself 
 	*/
 	inline void CopyAndMutate(const NeuralNet& nn, const float minVal, const float maxVal);
+
+	/*
+	Randomizes all the weights and biases
+	*/
+	void Randomize(const float minVal, const float maxVal);
 };

@@ -1,17 +1,17 @@
 #pragma once
 
-extern const int BINARY_STEP,
-LINEAR,
-SIGMOID,
-TANH,
-RELU,
-LEAKY_RELU,
-PARAMETRIC_RELU,
-ELU,
-SOFTMAX,
-SWISH,
-GELU,
-SELU;
+const int BINARY_STEP = 0,
+LINEAR = 1,
+SIGMOID = 2,
+TANH = 3,
+RELU = 4,
+LEAKY_RELU = 5,
+PARAMETRIC_RELU = 6,
+ELU = 7,
+SOFTMAX = 8,
+SWISH = 9,
+GELU = 10,
+SELU = 11;
 
 /*
 Adds a constant value to all the floats of the array dev_a

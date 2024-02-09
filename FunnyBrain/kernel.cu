@@ -25,6 +25,69 @@ SELU = 11;
 
 const dim3 THREADS_PER_BLOCK(SQRT_MAX_THREADS, SQRT_MAX_THREADS);
 
+__device__ __forceinline void Activate(float& h, const int activationFunction, const float parameter) {
+    switch (activationFunction) {
+    case BINARY_STEP:
+        if (h >= 0.0f) {
+            h = 1.0f;
+        }
+        else {
+            h = 0;
+        }
+        break;
+
+    case SIGMOID:
+        h = 1.0f / (1.0f + exp(-h));
+        break;
+
+    case TANH:
+        h = tanhf(h);
+        break;
+
+    case RELU:
+        if (h < 0.0f) {
+            h = 0;
+        }
+        break;
+
+    case LEAKY_RELU:
+        if (h < 0.0f) {
+            h = 0.1f * h;
+        }
+        break;
+
+    case PARAMETRIC_RELU:
+        if (h < 0.0f) {
+            h = parameter * h;
+        }
+        break;
+
+    case ELU:
+        if (h < 0.0f) {
+            h = parameter * (exp(h) - 1);
+        }
+        break;
+
+    case SOFTMAX:
+        h = 1.0f / (1.0f + exp(-h));
+        break;
+
+    case SWISH:
+        h = h / (1.0f + exp(-h));
+        break;
+
+    case GELU:
+        h = 0.5 * h * (1.0f + tanhf(0.7978845f * (h + 0.044715 * powf(h, 3))));
+        break;
+
+    case SELU:
+        if (h < 0.0f) {
+            h = parameter * (exp(h) - 1.0f);
+        }
+        break;
+    }
+}
+
 __global__ void CUDAAddArrays(const float* dev_a, const float* dev_b, float* dev_c, const int arrayLength)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -72,66 +135,7 @@ __global__ void CUDACalculateLayer(const float* dev_pLayer, const float* dev_bia
 
         h += dev_biases[row];
 
-        switch (activationFunction) {
-        case BINARY_STEP:
-            if (h >= 0.0f) {
-                h = 1.0f;
-            }
-            else {
-                h = 0;
-            }
-            break;
-
-        case SIGMOID:
-            h = 1.0f / (1.0f + exp(-h));
-            break;
-
-        case TANH:
-            h = tanhf(h);
-            break;
-
-        case RELU:
-            if (h < 0.0f) {
-                h = 0;
-            }
-            break;
-
-        case LEAKY_RELU:
-            if (h < 0.0f) {
-                h = 0.1f * h;
-            }
-            break;
-
-        case PARAMETRIC_RELU:
-            if (h < 0.0f) {
-                h = parameter * h;
-            }
-            break;
-
-        case ELU:
-            if (h < 0.0f) {
-                h = parameter * (exp(h) - 1);
-            }
-            break;
-
-        case SOFTMAX:
-            h = 1.0f / (1.0f + exp(-h));
-            break;
-
-        case SWISH:
-            h = h / (1.0f + exp(-h));
-            break;
-
-        case GELU:
-            h = 0.5 * h * (1.0f + tanhf(0.7978845f * (h + 0.044715 * powf(h, 3))));
-            break;
-
-        case SELU:
-            if (h < 0.0f) {
-                h = parameter * (exp(h) - 1.0f);
-            }
-            break;
-        }
+        Activate(h, activationFunction, parameter);
 
         dev_outputLayer[row] = h;
     }
@@ -140,69 +144,9 @@ __global__ void CUDACalculateLayer(const float* dev_pLayer, const float* dev_bia
 __global__ void CUDAActivateLayer(float* dev_layer, const int activationFunction, const float parameter, const int arrayLength) {
     int row = blockDim.x * blockIdx.x + threadIdx.x;
     if (row < arrayLength) {
-        // temporary variable used to compute the result
-        float h = 0;
+        float h = dev_layer[row];
 
-        switch (activationFunction) {
-        case BINARY_STEP:
-            if (h >= 0.0f) {
-                h = 1.0f;
-            }
-            else {
-                h = 0;
-            }
-            break;
-
-        case SIGMOID:
-            h = 1.0f / (1.0f + exp(-h));
-            break;
-
-        case TANH:
-            h = tanhf(h);
-            break;
-
-        case RELU:
-            if (h < 0.0f) {
-                h = 0;
-            }
-            break;
-
-        case LEAKY_RELU:
-            if (h < 0.0f) {
-                h = 0.1f * h;
-            }
-            break;
-
-        case PARAMETRIC_RELU:
-            if (h < 0.0f) {
-                h = parameter * h;
-            }
-            break;
-
-        case ELU:
-            if (h < 0.0f) {
-                h = parameter * (exp(h) - 1);
-            }
-            break;
-
-        case SOFTMAX:
-            h = 1.0f / (1.0f + exp(-h));
-            break;
-
-        case SWISH:
-            h = h / (1.0f + exp(-h));
-            break;
-
-        case GELU:
-            h = 0.5 * h * (1.0f + tanhf(0.7978845f * (h + 0.044715 * powf(h, 3))));
-            break;
-
-        case SELU:
-            if (h < 0.0f) {
-                h = parameter * (exp(h) - 1.0f);
-            }
-            break;
-        }
+        Activate(h, activationFunction, parameter);
 
         dev_layer[row] = h;
     }

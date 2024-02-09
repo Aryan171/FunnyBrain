@@ -9,34 +9,20 @@ Tensor2d::Tensor2d() {
 	this->tensor = nullptr;
 }
 
-Tensor2d::Tensor2d(const int rows, const int columns) {
-	this->rows = rows;
-	this->columns = columns;
-	this->sizeInBytes = rows * columns * sizeof(float);
-	this->numFloats = rows * columns;
-	this->tensor = (float*)Create(this->sizeInBytes);
-}
-
-Tensor2d::Tensor2d(const Tensor2d& tensor2d) {
-	this->rows = tensor2d.rows;
-	this->columns = tensor2d.columns;
-	this->sizeInBytes = this->rows * this->columns * sizeof(float);
-	this->numFloats = rows * columns;
-	this->tensor = (float*)Create(this->sizeInBytes);
-	CopyHostToHost(this->tensor, tensor2d.tensor, this->sizeInBytes);
-}
-
-Tensor2d::Tensor2d(float* floatArray, const int rows, const int columns) {
-	this->rows = rows;
-	this->columns = columns;
-	this->sizeInBytes = this->rows * this->columns * sizeof(float);
-	this->numFloats = rows * columns;
-	this->tensor = (float*)Create(this->sizeInBytes);
-	CopyHostToDevice(this->tensor, floatArray, this->sizeInBytes);
-}
-
 Tensor2d::~Tensor2d() {
 	Free(this->tensor);
+}
+
+void Tensor2d::operator=(const Tensor2d& t2d) {
+	if(this != &t2d) {
+		this->rows = t2d.rows;
+		this->columns = t2d.columns;
+		this->sizeInBytes = t2d.sizeInBytes;
+		this->numFloats = t2d.numFloats;
+		Free(this->tensor);
+		this->tensor = (float*)Create(t2d.sizeInBytes);
+		CopyDeviceToDevice(this->tensor, t2d.tensor, t2d.sizeInBytes);
+	}
 }
 
 int Tensor2d::Add(const Tensor2d& a, const Tensor2d& b, Tensor2d& c) {
@@ -61,6 +47,37 @@ int Tensor2d::Multiply(const Tensor2d& a, const Tensor2d& b, Tensor2d& c) {
 	}
 	Multiply2d(a.tensor, b.tensor, c.tensor, a.rows, a.columns, b.columns);
 	return 0;
+}
+
+void Tensor2d::Initialize(const int rows, const int columns) {
+	this->rows = rows;
+	this->columns = columns;
+	this->sizeInBytes = rows * columns * sizeof(float);
+	this->numFloats = rows * columns;
+	Free(this->tensor);
+	this->tensor = (float*)Create(this->sizeInBytes);
+}
+
+void Tensor2d::Initialize(const Tensor2d& tensor2d) {
+	if (this != &tensor2d) {
+		this->rows = tensor2d.rows;
+		this->columns = tensor2d.columns;
+		this->sizeInBytes = this->rows * this->columns * sizeof(float);
+		this->numFloats = rows * columns;
+		this->tensor = (float*)Create(this->sizeInBytes);
+		Free(this->tensor);
+		CopyHostToHost(this->tensor, tensor2d.tensor, this->sizeInBytes);
+	}
+}
+
+void Tensor2d::Initialize(float* floatArray, const int rows, const int columns) {
+	this->rows = rows;
+	this->columns = columns;
+	this->sizeInBytes = this->rows * this->columns * sizeof(float);
+	this->numFloats = rows * columns;
+	this->tensor = (float*)Create(this->sizeInBytes);
+	Free(this->tensor);
+	CopyHostToDevice(this->tensor, floatArray, this->sizeInBytes);
 }
 
 void Tensor2d::AddConstantVal(float b) {

@@ -9,7 +9,12 @@ NeuralNet::NeuralNet() {
 	this->numLayers = 0;
 }
 
-NeuralNet::NeuralNet(const Tensor1d* biases, const Tensor2d* weights, const int* shape, int numLayers) {
+void NeuralNet::Initialize(const Tensor1d* biases, const Tensor2d* weights, const int* shape, int numLayers) {
+	delete[] this->biases;
+	delete[] this->weights;
+	delete[] this->shape;
+	delete[] this->outputs;
+
 	this->biases = new Tensor1d[numLayers];
 	this->weights = new Tensor2d[numLayers - 1];
 	this->shape = new int[numLayers];
@@ -17,20 +22,25 @@ NeuralNet::NeuralNet(const Tensor1d* biases, const Tensor2d* weights, const int*
 	this->numLayers = numLayers;
 
 	for (int i = 0; i < numLayers - 1; ++i) {
-		this->biases[i] = Tensor1d(biases[i]);
-		this->weights[i] = Tensor2d(weights[i]);
+		this->biases[i].Initialize(biases[i]);
+		this->weights[i].Initialize(weights[i]);
 		this->shape[i] = shape[i];
-		this->outputs[i] = Tensor1d(shape[i]);
+		this->outputs[i].Initialize(shape[i]);
 	}
 
 	numLayers--;
 
-	this->biases[numLayers] = Tensor1d(biases[numLayers]);
+	this->biases[numLayers].Initialize(biases[numLayers]);
 	this->shape[numLayers] = shape[numLayers];
-	this->outputs[numLayers] = Tensor1d(shape[numLayers]);
+	this->outputs[numLayers].Initialize(shape[numLayers]);
 }
 
-NeuralNet::NeuralNet(const NeuralNet& nn) {
+void NeuralNet::Initialize(const NeuralNet& nn) {
+	delete[] this->biases;
+	delete[] this->weights;
+	delete[] this->shape;
+	delete[] this->outputs;
+
 	this->biases = new Tensor1d[nn.numLayers];
 	this->weights = new Tensor2d[nn.numLayers - 1];
 	this->shape = new int[nn.numLayers];
@@ -38,18 +48,23 @@ NeuralNet::NeuralNet(const NeuralNet& nn) {
 	this->numLayers = nn.numLayers;
 
 	for (int i = 0; i < nn.numLayers - 1; ++i) {
-		this->biases[i] = Tensor1d(nn.biases[i]);
-		this->weights[i] = Tensor2d(nn.weights[i]);
+		this->biases[i].Initialize(nn.biases[i]);
+		this->weights[i].Initialize(nn.weights[i]);
 		this->shape[i] = shape[i];
-		this->outputs[i] = Tensor1d(shape[i]);
+		this->outputs[i].Initialize(shape[i]);
 	}
 
-	this->biases[nn.numLayers - 1] = Tensor1d(nn.biases[nn.numLayers - 1]);
+	this->biases[nn.numLayers - 1].Initialize(nn.biases[nn.numLayers - 1]);
 	this->shape[nn.numLayers - 1] = nn.shape[nn.numLayers - 1];
-	this->outputs[nn.numLayers - 1] = Tensor1d(shape[nn.numLayers - 1]);
+	this->outputs[nn.numLayers - 1].Initialize(shape[nn.numLayers - 1]);
 }
 
-NeuralNet::NeuralNet(const int* shape, int numLayers) {
+void NeuralNet::Initialize(const int* shape, int numLayers) {
+	delete[] this->biases;
+	delete[] this->weights;
+	delete[] this->shape;
+	delete[] this->outputs;
+
 	this->biases = new Tensor1d[numLayers];
 	this->weights = new Tensor2d[numLayers - 1];
 	this->shape = new int[numLayers];
@@ -57,17 +72,17 @@ NeuralNet::NeuralNet(const int* shape, int numLayers) {
 	this->numLayers = numLayers;
 
 	for (int i = 0; i < numLayers - 1; ++i) {
-		this->biases[i] = Tensor1d(shape[i]);
-		this->weights[i] = Tensor2d(shape[i + 1], shape[i]);
+		this->biases[i].Initialize(shape[i]);
+		this->weights[i].Initialize(shape[i + 1], shape[i]);
 		this->shape[i] = shape[i];
-		this->outputs[i] = Tensor1d(shape[i]);
+		this->outputs[i].Initialize(shape[i]);
 	}
 
 	numLayers--;
 
-	this->biases[numLayers] = Tensor1d(shape[numLayers]);
+	this->biases[numLayers].Initialize(shape[numLayers]);
 	this->shape[numLayers] = shape[numLayers];
-	this->outputs[numLayers] = Tensor1d(shape[numLayers]);
+	this->outputs[numLayers].Initialize(shape[numLayers]);
 }
 
 void NeuralNet::FeedForward(const Tensor1d& input, const int activationFunction, const float parameter) {
@@ -97,15 +112,15 @@ void NeuralNet::Copy(const NeuralNet& nn) {
 	this->numLayers = nn.numLayers;
 
 	for (int i = 0; i < nn.numLayers - 1; ++i) {
-		this->biases[i] = Tensor1d(nn.biases[i]);
-		this->weights[i] = Tensor2d(nn.weights[i]);
+		this->biases[i].Initialize(nn.biases[i]);
+		this->weights[i].Initialize(nn.weights[i]);
 		this->shape[i] = shape[i];
-		this->outputs[i] = Tensor1d(shape[i]);
+		this->outputs[i].Initialize(shape[i]);
 	}
 
-	this->biases[nn.numLayers - 1] = Tensor1d(nn.biases[nn.numLayers - 1]);
+	this->biases[nn.numLayers - 1].Initialize(nn.biases[nn.numLayers - 1]);
 	this->shape[nn.numLayers - 1] = nn.shape[nn.numLayers - 1];
-	this->outputs[nn.numLayers - 1] = Tensor1d(shape[nn.numLayers - 1]);
+	this->outputs[nn.numLayers - 1].Initialize(shape[nn.numLayers - 1]);
 }
 
 void NeuralNet::Mutate(const float minVal, const float maxVal) {
@@ -119,4 +134,12 @@ void NeuralNet::Mutate(const float minVal, const float maxVal) {
 inline void NeuralNet::CopyAndMutate(const NeuralNet& nn, const float minVal, const float maxVal) {
 	this->Copy(nn);
 	this->Mutate(minVal, maxVal);
+}
+
+void NeuralNet::Randomize(const float minVal, const float maxVal) {
+	for (int i = 0; i < numLayers - 1; ++i) {
+		this->biases[i].RandomizeValues(minVal, maxVal);
+		this->weights[i].RandomizeValues(minVal, maxVal);
+	}
+	this->biases[numLayers - 1].RandomizeValues(minVal, maxVal);
 }

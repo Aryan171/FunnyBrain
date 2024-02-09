@@ -11,13 +11,12 @@ public:
 
 	Tensor1d();
 
-	Tensor1d(const int numFloats);
-
-	Tensor1d(const Tensor1d& tensor1d);
-
-	Tensor1d(float* floatArray, const int numFloats);
-
 	~Tensor1d();
+
+	/*
+	performs a deep copy of the right hand side Tensor1d object into the left hand side Tensor1d object
+	*/
+	void operator=(const Tensor1d& tensor1d);
 
 	/*
 	Adds 1d tensors a and b and stores the result in c
@@ -34,6 +33,12 @@ public:
 	1- if the dimentions of a, b and c are not equal
 	*/
 	static int Subtract(const Tensor1d& a, const Tensor1d& b, Tensor1d& c);
+
+	void Initialize(const int numFloats);
+
+	void Initialize(const Tensor1d& tensor1d);
+
+	void Initialize(float* floatArray, const int numFloats);
 
 	/*
 	Adds a constant value b to all the floats of the 1d tensor a

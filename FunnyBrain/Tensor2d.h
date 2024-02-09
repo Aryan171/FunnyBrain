@@ -12,13 +12,12 @@ public:
 
 	Tensor2d();
 
-	Tensor2d(const int rows, const int columns);
-
-	Tensor2d(const Tensor2d& tensor2d);
-
-	Tensor2d(float* floatArray, const int rows, const int columns);
-
 	~Tensor2d();
+
+	/*
+	performs a deep copy of the right hand side Tensor2d object into the left hand side Tensor2d object
+	*/
+	void operator=(const Tensor2d& t2d);
 
 	/*
 	Adds 2d tensors a and b asynchronously and stores the result in c
@@ -46,6 +45,12 @@ public:
 	columns in b must be equal to the number of columns in c
 	*/
 	static int Multiply(const Tensor2d& a, const Tensor2d& b, Tensor2d& c);
+
+	void Initialize(const int rows, const int columns);
+
+	void Initialize(const Tensor2d& tensor2d);
+
+	void Initialize(float* floatArray, const int rows, const int columns);
 
 	/*
 	Adds a constant value b to all the floats of the 2d tensor a asynchronously 
